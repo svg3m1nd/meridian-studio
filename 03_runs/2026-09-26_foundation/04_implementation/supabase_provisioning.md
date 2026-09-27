@@ -29,6 +29,7 @@ create user meridian_migrate
   with password '<MIGRATION_PASSWORD>' bypassrls createdb;
 
 grant meridian_migrate to postgres;
+grant create on database postgres to meridian_migrate;
 grant usage, create on schema public to meridian_migrate;
 grant all on all tables in schema public to meridian_migrate;
 grant all on all routines in schema public to meridian_migrate;
@@ -40,6 +41,11 @@ alter default privileges for role postgres in schema public grant all on sequenc
 create user meridian_runtime
   with password '<RUNTIME_PASSWORD>'
   nosuperuser nocreatedb nocreaterole noinherit nobypassrls;
+
+alter default privileges for role meridian_migrate in schema public
+  grant select, insert, update, delete on tables to meridian_runtime;
+alter default privileges for role meridian_migrate in schema public
+  grant usage, select on sequences to meridian_runtime;
 ```
 
 Do not put either password in this repository. Percent-encode reserved URL characters when constructing connection strings.

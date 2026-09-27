@@ -16,7 +16,7 @@ GRANT EXECUTE ON FUNCTION meridian_private.can_manage_org(text) TO meridian_runt
 GRANT EXECUTE ON FUNCTION meridian_private.can_access_workspace(text) TO meridian_runtime;
 GRANT EXECUTE ON FUNCTION meridian_private.can_edit_workspace(text) TO meridian_runtime;
 
-ALTER DEFAULT PRIVILEGES IN SCHEMA public
+ALTER DEFAULT PRIVILEGES FOR ROLE meridian_migrate IN SCHEMA public
   GRANT SELECT, INSERT, UPDATE, DELETE ON TABLES TO meridian_runtime;
-ALTER DEFAULT PRIVILEGES IN SCHEMA public
+ALTER DEFAULT PRIVILEGES FOR ROLE meridian_migrate IN SCHEMA public
   GRANT USAGE, SELECT ON SEQUENCES TO meridian_runtime;
