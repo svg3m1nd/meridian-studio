@@ -26,7 +26,7 @@
 
 - Prisma generation and schema validation passed
 - TypeScript passed
-- 17 unit tests passed
+- 18 unit tests passed
 - Production build passed
 - npm audit reports zero vulnerabilities
 - Static migration inventory confirmed 13 tables, 20 policies, and nine forced-RLS tables
