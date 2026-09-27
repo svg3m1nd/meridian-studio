@@ -27,6 +27,8 @@
 - Deterministic workspace readiness projection with missing-requirement details
 - Accessible baseline validation, pending state, and save confirmation
 - Owner/Admin workspace rename and audited soft archive
+- Persistent Portfolio/Baseline navigation, back-to-portfolio control, account context, and sign out
+- Production readiness revision for exact Vercel release verification
 
 ## Verification
 
