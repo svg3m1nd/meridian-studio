@@ -10,6 +10,6 @@ npm run build
 npm run db:validate
 ```
 
-Copy `.env.example` to `.env.local`. No collector, decoder, embedding provider, billing provider, or public share is active in this slice.
+Copy `.env.example` to `.env`; Prisma CLI loads this file for migration commands and Next.js also loads it locally. No collector, decoder, embedding provider, billing provider, or public share is active in this slice.
 
 `DATABASE_URL` is the constrained application connection. `DIRECT_URL` is reserved for migrations and must not be added to the Vercel runtime. `/api/health` reports process liveness; `/api/ready` verifies database connectivity.

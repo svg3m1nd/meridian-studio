@@ -52,7 +52,7 @@ Do not put either password in this repository. Percent-encode reserved URL chara
 
 ## 3. Configure local migration access
 
-Copy `04_app/.env.example` to `04_app/.env.local` and use Supabase **Connect** values:
+Copy `04_app/.env.example` to `04_app/.env` and use Supabase **Connect** values. Prisma CLI reads `.env`; the file is ignored by Git:
 
 ```dotenv
 # Supavisor transaction mode, port 6543. Runtime role; safe for Vercel functions.
