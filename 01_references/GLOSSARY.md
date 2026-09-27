@@ -1,0 +1,24 @@
+# Meridian Studio Glossary
+
+- **Organization:** Paying tenant, agency, reseller, or direct customer.
+- **Workspace:** One client or brand environment inside an organization.
+- **Graph:** A named, versioned projection of typed subjects and relationships.
+- **Node:** A graph participation record pointing to a canonical subject.
+- **Edge:** A typed relationship with confidence, weight, validity, and provenance.
+- **Source:** A configured origin such as a site, engine, profile, file, or API.
+- **Document:** Canonical identity for captured material across versions.
+- **Passage:** Addressable text segment used for retrieval and evidence.
+- **Entity:** Resolved real-world thing with aliases and temporal attributes.
+- **Claim:** Normalized subject–predicate–object assertion.
+- **Query:** Canonical information need with intent, audience, market, and variants.
+- **Retrieval run:** One execution of a query against an engine or source.
+- **Signal:** A measured value attached to a typed subject at a time.
+- **Evidence check:** Versioned question evaluated against observations.
+- **Finding:** A check result attached to a subject with rationale.
+- **Evidence layer:** Configurable group of related checks.
+- **Mirror:** Equivalent observations for a client and selected competitors.
+- **Trust gate:** Critical checks that may halt interpretation and route to remediation.
+- **Action:** Human-owned remediation or opportunity derived from findings.
+- **Projection:** Read model derived from canonical observations; safe to rebuild.
+- **Factory:** Stable configuration and reference material reused across runs.
+- **Product:** Run-specific output created by the factory.

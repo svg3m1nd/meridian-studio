@@ -1,0 +1,149 @@
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+enum MembershipRole {
+  OWNER
+  ADMIN
+  ANALYST
+  REVIEWER
+  VIEWER
+}
+model Organization {
+  id String @id @default(cuid())
+  name String
+  slug String @unique
+  createdAt DateTime @default(now())
+  memberships Membership[]
+  workspaces Workspace[]
+  auditEvents AuditEvent[]
+}
+model User {
+  id String @id @default(cuid())
+  email String @unique
+  emailVerified DateTime?
+  displayName String?
+  image String?
+  memberships Membership[]
+  grants WorkspaceGrant[]
+  accounts Account[]
+  sessions Session[]
+}
+model Account {
+  id String @id @default(cuid())
+  userId String
+  type String
+  provider String
+  providerAccountId String
+  refresh_token String?
+  access_token String?
+  expires_at Int?
+  token_type String?
+  scope String?
+  id_token String?
+  session_state String?
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  @@unique([provider,providerAccountId])
+}
+model Session {
+  id String @id @default(cuid())
+  sessionToken String @unique
+  userId String
+  expires DateTime
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+}
+model VerificationToken {
+  identifier String
+  token String
+  expires DateTime
+  @@unique([identifier,token])
+}
+model Membership {
+  id String @id @default(cuid())
+  organizationId String
+  userId String
+  role MembershipRole
+  organization Organization @relation(fields:[organizationId],references:[id],onDelete:Cascade)
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  grants WorkspaceGrant[]
+  @@unique([organizationId,userId])
+}
+model Workspace {
+  id String @id @default(cuid())
+  organizationId String
+  name String
+  slug String
+  organization Organization @relation(fields:[organizationId],references:[id],onDelete:Cascade)
+  grants WorkspaceGrant[]
+  businessProfile BusinessProfile?
+  competitors Competitor[]
+  topics Topic[]
+  queries SearchQuery[]
+  @@unique([organizationId,slug])
+}
+model BusinessProfile {
+  id String @id @default(cuid())
+  workspaceId String @unique
+  canonicalName String
+  websiteUrl String?
+  aliases String[]
+  locale String
+  market String?
+  updatedAt DateTime @updatedAt
+  workspace Workspace @relation(fields:[workspaceId],references:[id],onDelete:Cascade)
+}
+model Competitor {
+  id String @id @default(cuid())
+  workspaceId String
+  name String
+  websiteUrl String?
+  createdAt DateTime @default(now())
+  workspace Workspace @relation(fields:[workspaceId],references:[id],onDelete:Cascade)
+  @@unique([workspaceId,name])
+}
+model Topic {
+  id String @id @default(cuid())
+  workspaceId String
+  name String
+  workspace Workspace @relation(fields:[workspaceId],references:[id],onDelete:Cascade)
+  queries SearchQuery[]
+  @@unique([workspaceId,name])
+}
+model SearchQuery {
+  id String @id @default(cuid())
+  workspaceId String
+  topicId String?
+  text String
+  intent String?
+  locale String?
+  market String?
+  workspace Workspace @relation(fields:[workspaceId],references:[id],onDelete:Cascade)
+  topic Topic? @relation(fields:[topicId],references:[id],onDelete:SetNull)
+  @@unique([workspaceId,text,locale,market])
+}
+model WorkspaceGrant {
+  id String @id @default(cuid())
+  membershipId String
+  userId String
+  workspaceId String
+  membership Membership @relation(fields:[membershipId],references:[id],onDelete:Cascade)
+  user User @relation(fields:[userId],references:[id],onDelete:Cascade)
+  workspace Workspace @relation(fields:[workspaceId],references:[id],onDelete:Cascade)
+  @@unique([membershipId,workspaceId])
+}
+model AuditEvent {
+  id String @id @default(cuid())
+  organizationId String
+  workspaceId String?
+  actorUserId String?
+  action String
+  aggregateType String
+  aggregateId String
+  metadata Json?
+  occurredAt DateTime @default(now())
+  organization Organization @relation(fields:[organizationId],references:[id],onDelete:Cascade)
+  @@index([organizationId,occurredAt])
+}

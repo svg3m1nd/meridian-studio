@@ -1,0 +1,4 @@
+import {describe,expect,it} from "vitest"; import {authorizeWorkspace,TenantAuthorizationError,type MembershipRecord} from "@/lib/tenant/context";
+const membership:MembershipRecord={id:"m1",userId:"u1",organizationId:"o1",role:"ANALYST",workspaceIds:["w1"]};
+const valid={userId:"u1",requestedOrganizationId:"o1",requestedWorkspaceId:"w1",workspaceOrganizationId:"o1",membership};
+describe("tenant authorization",()=>{it("creates scoped context",()=>expect(authorizeWorkspace(valid).workspaceId).toBe("w1"));it.each([{userId:"u2"},{requestedOrganizationId:"o2"},{requestedWorkspaceId:"w2"},{workspaceOrganizationId:"o2"}])("denies cross-tenant access",override=>expect(()=>authorizeWorkspace({...valid,...override})).toThrow(TenantAuthorizationError));it("enforces roles",()=>expect(()=>authorizeWorkspace({...valid,minimumRole:"ADMIN"})).toThrow(TenantAuthorizationError))});

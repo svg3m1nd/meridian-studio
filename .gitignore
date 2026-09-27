@@ -1,0 +1,12 @@
+.env
+.env.local
+.tmp/
+node_modules/
+.next/
+dist/
+coverage/
+04_app/src/generated/
+03_runs/*/00_inputs/raw/
+03_runs/*/00_inputs/captures/
+!03_runs/*/00_inputs/raw/.gitkeep
+!03_runs/*/00_inputs/captures/.gitkeep

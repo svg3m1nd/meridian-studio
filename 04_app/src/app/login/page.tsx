@@ -1,0 +1,2 @@
+import { signIn } from "@/auth";
+export default function Login(){return <main className="center"><section className="login"><article><small>MERIDIAN STUDIO</small><h1>ENTER THE STUDIO</h1><p>Authenticate to access your organizations and client workspaces.</p>{process.env.AUTH_GITHUB_ID?<form action={async()=>{"use server";await signIn("github",{redirectTo:"/portfolio"})}}><button>Continue with GitHub</button></form>:<p className="notice">Authentication is ready. Add GitHub OAuth credentials to activate sign-in.</p>}</article></section></main>}

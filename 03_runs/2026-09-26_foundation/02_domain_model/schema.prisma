@@ -1,0 +1,576 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum MembershipRole { OWNER ADMIN ANALYST REVIEWER VIEWER }
+enum SubjectKind { WORKSPACE ENTITY PERSON PLACE DOCUMENT PASSAGE CLAIM QUERY RESULT ANSWER SOURCE ACTION }
+enum RunStatus { QUEUED RUNNING SUCCEEDED PARTIAL FAILED CANCELED }
+enum ObservationOutcome { CAPTURED FAILED BLOCKED INVALID }
+enum EvidenceState { SUPPORTED PARTIAL CONFLICTING ABSENT UNMEASURABLE }
+enum ReviewState { UNREVIEWED APPROVED REJECTED SUPERSEDED }
+enum ActionStatus { PROPOSED ACCEPTED IN_PROGRESS BLOCKED COMPLETE DISMISSED }
+enum ScopeKind { SYSTEM ORGANIZATION WORKSPACE }
+enum DecodingStatus { NOT_REQUIRED PENDING DECODED FAILED UNSUPPORTED }
+
+model Organization {
+  id              String            @id @default(cuid())
+  name            String
+  slug            String            @unique
+  createdAt       DateTime          @default(now())
+  memberships     Membership[]
+  workspaces      Workspace[]
+  brandProfile    BrandProfile?
+  customDomains   CustomDomain[]
+  signalDefs      SignalDefinition[]
+  layerDefs       LayerDefinition[]
+}
+
+model User {
+  id          String       @id @default(cuid())
+  email       String       @unique
+  displayName String?
+  createdAt   DateTime     @default(now())
+  memberships Membership[]
+}
+
+model Membership {
+  id             String         @id @default(cuid())
+  organizationId String
+  userId         String
+  role           MembershipRole
+  createdAt      DateTime       @default(now())
+  organization   Organization   @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  user           User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  @@unique([organizationId, userId])
+  @@index([userId])
+}
+
+model BrandProfile {
+  id             String       @id @default(cuid())
+  organizationId String       @unique
+  productName    String
+  logoObjectKey  String?
+  faviconKey     String?
+  primaryColor   String?
+  accentColor    String?
+  supportName    String?
+  supportEmail   String?
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+}
+
+model CustomDomain {
+  id             String       @id @default(cuid())
+  organizationId String
+  hostname       String       @unique
+  verifiedAt     DateTime?
+  createdAt      DateTime     @default(now())
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  @@index([organizationId])
+}
+
+model Workspace {
+  id             String            @id @default(cuid())
+  organizationId String
+  name           String
+  slug           String
+  createdAt      DateTime          @default(now())
+  organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  subjects       Subject[]
+  sources        Source[]
+  queries        Query[]
+  graphDefs      GraphDefinition[]
+  observationPlans ObservationPlan[]
+  observationRuns ObservationRun[]
+  findings       Finding[]
+  actions        Action[]
+  competitorSets CompetitorSet[]
+  informationGainAnalyses InformationGainAnalysis[]
+  @@unique([organizationId, slug])
+}
+
+model Subject {
+  id          String      @id @default(cuid())
+  workspaceId String
+  kind        SubjectKind
+  label       String
+  createdAt   DateTime    @default(now())
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  entity      Entity?
+  document    Document?
+  passage     Passage?
+  claim       Claim?
+  query       Query?
+  source      Source?
+  graphNodes  GraphNode[]
+  measurements SignalMeasurement[]
+  findings    Finding[]
+  actions     Action[]
+  competitorMemberships CompetitorMember[]
+  embeddingSets EmbeddingSet[]
+  @@index([workspaceId, kind])
+}
+
+model Entity {
+  id               String   @id @default(cuid())
+  subjectId        String   @unique
+  entityType       String
+  canonicalName    String
+  aliases          Json?
+  externalIds      Json?
+  resolutionStatus String
+  subject          Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+}
+
+model Document {
+  id          String            @id @default(cuid())
+  subjectId   String            @unique
+  canonicalUrl String?
+  title       String?
+  subject     Subject           @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  versions    DocumentVersion[]
+}
+
+model DocumentVersion {
+  id             String      @id @default(cuid())
+  documentId     String
+  observationId String?
+  contentHash    String
+  objectKey      String?
+  publishedAt    DateTime?
+  observedAt     DateTime
+  extractionVersion String
+  document       Document    @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  observation    Observation? @relation(fields: [observationId], references: [id])
+  passages       Passage[]
+  @@unique([documentId, contentHash])
+  @@index([observedAt])
+}
+
+model Passage {
+  id                String          @id @default(cuid())
+  subjectId         String          @unique
+  documentVersionId String
+  startOffset       Int?
+  endOffset         Int?
+  contentHash       String
+  text              String
+  subject           Subject         @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  documentVersion   DocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+  answerCitations   AnswerCitation[]
+}
+
+model Claim {
+  id              String    @id @default(cuid())
+  subjectId       String    @unique
+  claimantSubjectId String?
+  predicate       String
+  objectSubjectId String?
+  literalValue    Json?
+  confidence      Decimal?  @db.Decimal(8, 6)
+  validFrom       DateTime?
+  validTo         DateTime?
+  provenance      Json
+  subject         Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+}
+
+model Source {
+  id          String    @id @default(cuid())
+  workspaceId String
+  subjectId   String    @unique
+  type        String
+  name        String
+  locator     String?
+  sourceClass String
+  config      Json?
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  subject     Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  plans       ObservationPlan[]
+  observations Observation[]
+  @@index([workspaceId, type])
+}
+
+model Query {
+  id          String    @id @default(cuid())
+  workspaceId String
+  subjectId   String    @unique
+  text        String
+  intent      String?
+  audience    String?
+  locale      String?
+  market      String?
+  variants    Json?
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  subject     Subject   @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  plans       ObservationPlan[]
+  informationGainAnalyses InformationGainAnalysis[]
+}
+
+model ObservationPlan {
+  id          String    @id @default(cuid())
+  workspaceId String
+  sourceId    String
+  queryId     String?
+  name        String
+  schedule    String?
+  parameters  Json
+  policy      Json?
+  active      Boolean   @default(true)
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  source      Source    @relation(fields: [sourceId], references: [id])
+  query       Query?    @relation(fields: [queryId], references: [id])
+  runs        ObservationRun[]
+  @@index([workspaceId, active])
+}
+
+model ObservationRun {
+  id             String     @id @default(cuid())
+  workspaceId    String
+  planId         String?
+  idempotencyKey String
+  status         RunStatus
+  parameters     Json
+  collectorVersion String
+  startedAt      DateTime?
+  completedAt    DateTime?
+  cost           Json?
+  workspace      Workspace  @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  plan           ObservationPlan? @relation(fields: [planId], references: [id])
+  observations   Observation[]
+  results        RetrievalResult[]
+  answers        GeneratedAnswer[]
+  evaluations    Evaluation[]
+  @@unique([workspaceId, idempotencyKey])
+  @@index([workspaceId, status])
+}
+
+model Observation {
+  id          String             @id @default(cuid())
+  runId       String
+  sourceId    String
+  outcome     ObservationOutcome
+  observedAt  DateTime
+  contentHash String?
+  objectKey   String?
+  metadata    Json?
+  error       Json?
+  run         ObservationRun     @relation(fields: [runId], references: [id], onDelete: Cascade)
+  source      Source             @relation(fields: [sourceId], references: [id])
+  documentVersions DocumentVersion[]
+  results     RetrievalResult[]
+  answers     GeneratedAnswer[]
+  measurements SignalMeasurement[]
+  evidenceLinks EvidenceLink[]
+  artifacts    RawArtifact[]
+  @@index([runId, observedAt])
+}
+
+model RawArtifact {
+  id                String         @id @default(cuid())
+  observationId     String
+  contentType       String
+  wireEncoding      String?
+  transportEncoding String?
+  compression       String?
+  messageType       String?
+  schemaVersion     String?
+  rawObjectKey      String
+  decodedObjectKey  String?
+  rawSha256         String
+  decodedSha256     String?
+  decoderVersion    String?
+  decodingStatus    DecodingStatus
+  createdAt         DateTime       @default(now())
+  observation       Observation    @relation(fields: [observationId], references: [id], onDelete: Cascade)
+  @@index([observationId])
+  @@index([rawSha256])
+}
+
+model RetrievalResult {
+  id            String         @id @default(cuid())
+  runId         String
+  observationId String
+  subjectId     String?
+  rank          Int?
+  url           String?
+  title         String?
+  snippet       String?
+  run           ObservationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  observation   Observation   @relation(fields: [observationId], references: [id], onDelete: Cascade)
+  answerCitations AnswerCitation[]
+  @@index([runId, rank])
+}
+
+model GeneratedAnswer {
+  id            String         @id @default(cuid())
+  runId         String
+  observationId String
+  model         String?
+  text          String
+  contentHash   String
+  run           ObservationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  observation   Observation   @relation(fields: [observationId], references: [id], onDelete: Cascade)
+  citations     AnswerCitation[]
+}
+
+model AnswerCitation {
+  id          String          @id @default(cuid())
+  answerId    String
+  resultId    String?
+  passageId   String?
+  ordinal     Int?
+  context     String?
+  answer      GeneratedAnswer @relation(fields: [answerId], references: [id], onDelete: Cascade)
+  result      RetrievalResult? @relation(fields: [resultId], references: [id])
+  passage     Passage?        @relation(fields: [passageId], references: [id])
+}
+
+model GraphDefinition {
+  id          String      @id @default(cuid())
+  workspaceId String
+  key         String
+  name        String
+  version     Int
+  schema      Json
+  workspace   Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  nodes       GraphNode[]
+  edges       GraphEdge[]
+  @@unique([workspaceId, key, version])
+}
+
+model GraphNode {
+  id                String          @id @default(cuid())
+  graphDefinitionId String
+  subjectId         String
+  graph             GraphDefinition @relation(fields: [graphDefinitionId], references: [id], onDelete: Cascade)
+  subject           Subject         @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  outgoingEdges     GraphEdge[]     @relation("EdgeSource")
+  incomingEdges     GraphEdge[]     @relation("EdgeTarget")
+  @@unique([graphDefinitionId, subjectId])
+}
+
+model GraphEdge {
+  id                String          @id @default(cuid())
+  graphDefinitionId String
+  sourceNodeId      String
+  targetNodeId      String
+  type              String
+  weight            Decimal?        @db.Decimal(18, 8)
+  confidence        Decimal?        @db.Decimal(8, 6)
+  validFrom         DateTime?
+  validTo           DateTime?
+  derivation        Json
+  provenance        Json
+  graph             GraphDefinition @relation(fields: [graphDefinitionId], references: [id], onDelete: Cascade)
+  sourceNode        GraphNode       @relation("EdgeSource", fields: [sourceNodeId], references: [id], onDelete: Cascade)
+  targetNode        GraphNode       @relation("EdgeTarget", fields: [targetNodeId], references: [id], onDelete: Cascade)
+  measurements      SignalMeasurement[]
+  @@index([graphDefinitionId, type])
+  @@index([sourceNodeId, targetNodeId])
+}
+
+model SignalDefinition {
+  id             String        @id @default(cuid())
+  organizationId String?
+  scope          ScopeKind
+  key            String
+  name           String
+  version        Int
+  valueType      String
+  unit           String?
+  contract       Json
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  measurements   SignalMeasurement[]
+  @@unique([organizationId, key, version])
+}
+
+model SignalMeasurement {
+  id                 String           @id @default(cuid())
+  signalDefinitionId String
+  subjectId          String?
+  graphEdgeId        String?
+  observationId      String
+  observedAt         DateTime
+  rawValue           Json
+  normalizedValue    Decimal?         @db.Decimal(18, 8)
+  normalization      Json?
+  confidence         Decimal?         @db.Decimal(8, 6)
+  signalDefinition   SignalDefinition @relation(fields: [signalDefinitionId], references: [id])
+  subject            Subject?         @relation(fields: [subjectId], references: [id])
+  graphEdge          GraphEdge?       @relation(fields: [graphEdgeId], references: [id])
+  observation        Observation      @relation(fields: [observationId], references: [id])
+  @@index([subjectId, observedAt])
+}
+
+model EmbeddingSet {
+  id                  String   @id @default(cuid())
+  subjectId           String
+  modelKey            String
+  modelVersion        String
+  segmentationMethod  String
+  segmentationVersion String
+  dimension           Int
+  vectorCount         Int
+  vectorObjectKey     String
+  fdeObjectKey        String?
+  fdeAlgorithmVersion String?
+  contentHash         String
+  createdAt           DateTime @default(now())
+  subject             Subject  @relation(fields: [subjectId], references: [id], onDelete: Cascade)
+  @@unique([subjectId, modelKey, modelVersion, segmentationVersion, contentHash])
+  @@index([subjectId])
+}
+
+model InformationGainAnalysis {
+  id                  String         @id @default(cuid())
+  workspaceId         String
+  queryId             String
+  baselineContract    Json
+  candidateContract   Json
+  embeddingContract   Json
+  scoringContract     Json
+  facetCoverage       Json
+  novelty             Json
+  redundancy          Json
+  contradictionValue  Json
+  exactSimilarity     Json
+  approximateRetrieval Json?
+  evidence            Json
+  createdAt           DateTime       @default(now())
+  workspace           Workspace      @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  query               Query          @relation(fields: [queryId], references: [id])
+  @@index([workspaceId, createdAt])
+  @@index([queryId])
+}
+
+model LayerDefinition {
+  id             String        @id @default(cuid())
+  organizationId String?
+  scope          ScopeKind
+  key            String
+  name           String
+  scoreLabel     String
+  version        Int
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  rules          LayerRule[]
+  findingLinks   FindingLayer[]
+  @@unique([organizationId, key, version])
+}
+
+model LayerRule {
+  id                String          @id @default(cuid())
+  layerDefinitionId String
+  name              String
+  version           Int
+  expression        Json
+  layerDefinition   LayerDefinition @relation(fields: [layerDefinitionId], references: [id], onDelete: Cascade)
+  checks            EvidenceCheck[]
+}
+
+model EvidenceCheck {
+  id          String      @id @default(cuid())
+  layerRuleId String
+  key         String
+  question    String
+  version     Int
+  applicability Json?
+  layerRule   LayerRule   @relation(fields: [layerRuleId], references: [id], onDelete: Cascade)
+  evaluations Evaluation[]
+  @@unique([layerRuleId, key, version])
+}
+
+model Evaluation {
+  id             String         @id @default(cuid())
+  checkId        String
+  runId          String
+  subjectId      String?
+  state          EvidenceState
+  rationale      String
+  confidence     Decimal?       @db.Decimal(8, 6)
+  evaluator      String
+  evaluatorVersion String
+  evaluatedAt    DateTime       @default(now())
+  reviewState    ReviewState    @default(UNREVIEWED)
+  check          EvidenceCheck  @relation(fields: [checkId], references: [id])
+  run            ObservationRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+  evidenceLinks  EvidenceLink[]
+  findings       Finding[]
+  @@index([runId, state])
+}
+
+model EvidenceLink {
+  id            String      @id @default(cuid())
+  evaluationId  String
+  observationId String
+  locator       Json?
+  role          String
+  evaluation    Evaluation  @relation(fields: [evaluationId], references: [id], onDelete: Cascade)
+  observation   Observation @relation(fields: [observationId], references: [id])
+  @@unique([evaluationId, observationId, role])
+}
+
+model Finding {
+  id           String      @id @default(cuid())
+  workspaceId  String
+  evaluationId String
+  subjectId    String?
+  title        String
+  summary      String
+  severity     String
+  reviewState  ReviewState @default(UNREVIEWED)
+  createdAt    DateTime    @default(now())
+  workspace    Workspace   @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  evaluation   Evaluation  @relation(fields: [evaluationId], references: [id])
+  subject      Subject?    @relation(fields: [subjectId], references: [id])
+  layers       FindingLayer[]
+  actions      Action[]
+  @@index([workspaceId, reviewState])
+}
+
+model FindingLayer {
+  findingId        String
+  layerDefinitionId String
+  finding          Finding         @relation(fields: [findingId], references: [id], onDelete: Cascade)
+  layerDefinition  LayerDefinition @relation(fields: [layerDefinitionId], references: [id])
+  @@id([findingId, layerDefinitionId])
+}
+
+model CompetitorSet {
+  id          String             @id @default(cuid())
+  workspaceId String
+  name        String
+  comparisonContract Json
+  workspace   Workspace          @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  members     CompetitorMember[]
+}
+
+model CompetitorMember {
+  competitorSetId String
+  subjectId       String
+  role            String
+  competitorSet   CompetitorSet @relation(fields: [competitorSetId], references: [id], onDelete: Cascade)
+  subject         Subject       @relation(fields: [subjectId], references: [id])
+  @@id([competitorSetId, subjectId])
+}
+
+model Action {
+  id          String       @id @default(cuid())
+  workspaceId String
+  subjectId   String?
+  findingId   String?
+  title       String
+  rationale   String
+  priority    String
+  status      ActionStatus @default(PROPOSED)
+  ownerUserId String?
+  dueAt       DateTime?
+  createdAt   DateTime     @default(now())
+  workspace   Workspace    @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+  subject     Subject?     @relation(fields: [subjectId], references: [id])
+  finding     Finding?     @relation(fields: [findingId], references: [id])
+  @@index([workspaceId, status])
+}

@@ -1,0 +1,118 @@
+{
+  "organization": {
+    "id": "org_fusion_vine",
+    "name": "Fusion Vine",
+    "slug": "fusion_vine",
+    "brandProfile": {
+      "productName": "Meridian Studio",
+      "primaryColor": "#18E6F2",
+      "accentColor": "#FF3EB5"
+    }
+  },
+  "workspace": {
+    "id": "ws_acme",
+    "organizationId": "org_fusion_vine",
+    "name": "Acme Advisory",
+    "slug": "acme_advisory"
+  },
+  "subjects": [
+    { "id": "sub_acme", "workspaceId": "ws_acme", "kind": "ENTITY", "label": "Acme Advisory" },
+    { "id": "sub_page", "workspaceId": "ws_acme", "kind": "DOCUMENT", "label": "Acme services page" },
+    { "id": "sub_query", "workspaceId": "ws_acme", "kind": "QUERY", "label": "best advisory firm denver" },
+    { "id": "sub_claim", "workspaceId": "ws_acme", "kind": "CLAIM", "label": "Acme serves Denver businesses" }
+  ],
+  "entity": {
+    "subjectId": "sub_acme",
+    "entityType": "ORGANIZATION",
+    "canonicalName": "Acme Advisory",
+    "aliases": ["Acme"],
+    "externalIds": { "wikidata": null, "googleBusinessProfile": "gbp_123" },
+    "resolutionStatus": "PARTIAL"
+  },
+  "source": {
+    "id": "src_search",
+    "workspaceId": "ws_acme",
+    "subjectId": "sub_source_search",
+    "type": "ANSWER_ENGINE",
+    "name": "Example answer engine",
+    "sourceClass": "OBSERVED_PROVIDER"
+  },
+  "query": {
+    "id": "qry_denver_advisory",
+    "workspaceId": "ws_acme",
+    "subjectId": "sub_query",
+    "text": "best advisory firm in Denver",
+    "intent": "COMMERCIAL_INVESTIGATION",
+    "locale": "en-US",
+    "market": "US-CO-Denver"
+  },
+  "observationRun": {
+    "id": "run_001",
+    "workspaceId": "ws_acme",
+    "idempotencyKey": "ws_acme:answer:qry_denver_advisory:2026-09-26T15:00Z",
+    "status": "SUCCEEDED",
+    "collectorVersion": "import-v1",
+    "parameters": { "queryId": "qry_denver_advisory", "locale": "en-US" }
+  },
+  "observation": {
+    "id": "obs_001",
+    "runId": "run_001",
+    "sourceId": "src_search",
+    "outcome": "CAPTURED",
+    "observedAt": "2026-09-26T15:00:00Z",
+    "contentHash": "sha256:example",
+    "objectKey": "captures/ws_acme/run_001/obs_001.json"
+  },
+  "graphDefinitions": [
+    { "id": "graph_entity_v1", "key": "entity", "name": "Entity graph", "version": 1 },
+    { "id": "graph_citation_v1", "key": "citation", "name": "Source and citation graph", "version": 1 }
+  ],
+  "layerDefinitions": [
+    { "key": "link", "name": "Link", "scoreLabel": "Authority", "version": 1 },
+    { "key": "entity", "name": "Entity", "scoreLabel": "Understanding", "version": 1 },
+    { "key": "salience", "name": "Salience", "scoreLabel": "Depth", "version": 1 },
+    { "key": "behavioral", "name": "Behavioral", "scoreLabel": "Satisfaction", "version": 1 },
+    { "key": "identity", "name": "Identity", "scoreLabel": "Provenance", "version": 1 },
+    { "key": "review", "name": "Review", "scoreLabel": "Prominence", "version": 1 },
+    { "key": "trust", "name": "Trust", "scoreLabel": "Safety", "version": 1 },
+    { "key": "citation", "name": "Citation", "scoreLabel": "Citability", "version": 1 }
+  ],
+  "signalDefinition": {
+    "key": "answer_citation_presence",
+    "name": "Answer citation presence",
+    "version": 1,
+    "valueType": "BOOLEAN",
+    "unit": null,
+    "contract": { "validSubjectKinds": ["DOCUMENT", "ENTITY"], "direction": "HIGHER_IS_BETTER" }
+  },
+  "evaluation": {
+    "id": "eval_entity_001",
+    "runId": "run_001",
+    "subjectId": "sub_acme",
+    "state": "PARTIAL",
+    "rationale": "The brand is named consistently but lacks a verified external knowledge identifier.",
+    "confidence": 0.86,
+    "evaluator": "rules",
+    "evaluatorVersion": "entity-resolution-v1",
+    "reviewState": "UNREVIEWED",
+    "evidence": [{ "observationId": "obs_001", "role": "SUPPORTING" }]
+  },
+  "finding": {
+    "id": "finding_001",
+    "workspaceId": "ws_acme",
+    "evaluationId": "eval_entity_001",
+    "subjectId": "sub_acme",
+    "title": "Entity identity is only partially resolved",
+    "severity": "HIGH",
+    "affectedLayers": ["entity", "identity", "trust"]
+  },
+  "action": {
+    "id": "action_001",
+    "workspaceId": "ws_acme",
+    "subjectId": "sub_acme",
+    "findingId": "finding_001",
+    "title": "Reconcile authoritative organization identifiers",
+    "priority": "HIGH",
+    "status": "PROPOSED"
+  }
+}
