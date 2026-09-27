@@ -79,6 +79,7 @@ model Workspace {
   name           String
   slug           String
   createdAt      DateTime          @default(now())
+  archivedAt     DateTime?
   organization   Organization      @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   subjects       Subject[]
   sources        Source[]
@@ -91,6 +92,7 @@ model Workspace {
   competitorSets CompetitorSet[]
   informationGainAnalyses InformationGainAnalysis[]
   @@unique([organizationId, slug])
+  @@index([organizationId, archivedAt])
 }
 
 model Subject {

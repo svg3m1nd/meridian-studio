@@ -23,22 +23,25 @@
 - Baseline save confirmation and clearer target-search/AI-prompt guidance
 - Production GitHub-login allowlist that fails closed when unconfigured
 - Idempotent first-owner bootstrap command for the Fusion Vine organization
+- Organization-scoped portfolio switching with unauthorized-ID fallback
+- Deterministic workspace readiness projection with missing-requirement details
+- Accessible baseline validation, pending state, and save confirmation
+- Owner/Admin workspace rename and audited soft archive
 
 ## Verification
 
 - Prisma generation and schema validation passed
 - TypeScript passed
-- 18 unit tests passed
+- 25 unit tests passed
 - Production build passed
 - npm audit reports zero vulnerabilities
 - Static migration inventory confirmed 13 tables, 20 policies, and nine forced-RLS tables
 - Vercel production build succeeded from the GitHub `main` branch
-- Both reviewed Prisma migrations applied successfully to Supabase development
+- Four reviewed Prisma migrations applied successfully to Supabase development
 - Live runtime-role checks confirmed nine forced-RLS tables, 20 policies, no Data API grants, tenant isolation, role enforcement, audit immutability, and fixture cleanup
+- Live runtime-role checks also confirmed workspace create/archive and baseline create/replace flows
 - Vercel production readiness probe returned HTTP 200 with the constrained Supabase runtime connection
 
 ## Remaining before Slice 1 approval
 
-- Register GitHub OAuth credentials and complete the first-owner bootstrap
-- Add database integration tests for full creation and baseline-replacement flows
-- Add organization switching when a user belongs to multiple organizations
+- Complete responsive browser smoke testing for portfolio switching and management controls

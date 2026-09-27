@@ -144,6 +144,21 @@ async function run(){
  const runtimeBaseline=await asUser(ids.owner,tx=>tx.businessProfile.findUnique({where:{workspaceId:ids.runtimeWorkspace},select:{canonicalName:true}}));
  assert.equal(runtimeBaseline?.canonicalName,"Runtime Baseline","owners must be able to save the complete baseline through the runtime role");
 
+ await asUser(ids.owner,async tx=>{
+  await tx.businessProfile.update({where:{workspaceId:ids.runtimeWorkspace},data:{canonicalName:"Replaced Runtime Baseline",websiteUrl:"https://replacement.example.invalid",aliases:["Replacement"],locale:"en-GB",market:"replacement market"}});
+  await tx.competitor.deleteMany({where:{workspaceId:ids.runtimeWorkspace}});
+  await tx.topic.deleteMany({where:{workspaceId:ids.runtimeWorkspace}});
+  await tx.searchQuery.deleteMany({where:{workspaceId:ids.runtimeWorkspace}});
+  await tx.competitor.createMany({data:[{workspaceId:ids.runtimeWorkspace,name:"Replacement Competitor"}]});
+  await tx.topic.createMany({data:[{workspaceId:ids.runtimeWorkspace,name:"Replacement Topic"}]});
+  await tx.searchQuery.createMany({data:[{workspaceId:ids.runtimeWorkspace,text:"replacement query",locale:"en-GB",market:"replacement market"}]});
+ });
+ const replacedBaseline=await asUser(ids.owner,tx=>tx.workspace.findUnique({where:{id:ids.runtimeWorkspace},include:{businessProfile:true,competitors:true,topics:true,queries:true}}));
+ assert.equal(replacedBaseline?.businessProfile?.canonicalName,"Replaced Runtime Baseline");
+ assert.deepEqual(replacedBaseline?.competitors.map(item=>item.name),["Replacement Competitor"]);
+ assert.deepEqual(replacedBaseline?.topics.map(item=>item.name),["Replacement Topic"]);
+ assert.deepEqual(replacedBaseline?.queries.map(item=>item.text),["replacement query"]);
+
  await asUser(ids.analyst,tx=>tx.competitor.create({data:{workspaceId:ids.workspaceA,name:"Allowed Analyst Competitor"}}));
  await assert.rejects(()=>asUser(ids.analyst,tx=>tx.competitor.create({data:{workspaceId:ids.workspaceB,name:"Blocked Cross-Tenant Competitor"}})));
  await assert.rejects(()=>asUser(ids.viewer,tx=>tx.topic.create({data:{workspaceId:ids.workspaceA,name:"Blocked Viewer Topic"}})));
@@ -151,7 +166,16 @@ async function run(){
  const auditUpdate=await asUser(ids.owner,tx=>tx.auditEvent.updateMany({where:{id:ids.auditA},data:{action:"blocked.update"}}));
  assert.equal(auditUpdate.count,0,"audit events must be immutable through the runtime role");
 
- console.log("RLS integration checks passed: runtime role, 9 forced-RLS tables, 20 policies, no Data API grants, tenant isolation, runtime workspace creation, baseline save, role enforcement, audit immutability, fixture cleanup");
+ const blockedArchive=await asUser(ids.viewer,tx=>tx.workspace.updateMany({where:{id:ids.workspaceA},data:{archivedAt:new Date()}}));
+ assert.equal(blockedArchive.count,0,"viewers must not archive workspaces");
+ await asUser(ids.owner,async tx=>{
+  await tx.workspace.update({where:{id:ids.runtimeWorkspace},data:{archivedAt:new Date()}});
+  await tx.auditEvent.create({data:{organizationId:ids.orgA,workspaceId:ids.runtimeWorkspace,actorUserId:ids.owner,action:"workspace.archived",aggregateType:"Workspace",aggregateId:ids.runtimeWorkspace}});
+ });
+ const archivedWorkspace=await asUser(ids.owner,tx=>tx.workspace.findUnique({where:{id:ids.runtimeWorkspace},select:{archivedAt:true}}));
+ assert.ok(archivedWorkspace?.archivedAt,"owners must be able to soft-archive workspaces");
+
+ console.log("RLS integration checks passed: runtime role, 9 forced-RLS tables, 20 policies, no Data API grants, tenant isolation, workspace create/archive, baseline create/replace, role enforcement, audit immutability, fixture cleanup");
 }
 
 try{
