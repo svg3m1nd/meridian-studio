@@ -29,7 +29,8 @@ const ids={
  ownerMembership:`${marker}-owner-membership`,analystMembership:`${marker}-analyst-membership`,viewerMembership:`${marker}-viewer-membership`,outsiderMembership:`${marker}-outsider-membership`,
  workspaceA:`${marker}-workspace-a`,workspaceA2:`${marker}-workspace-a2`,workspaceB:`${marker}-workspace-b`,
  analystGrant:`${marker}-analyst-grant`,viewerGrant:`${marker}-viewer-grant`,
- profileA:`${marker}-profile-a`,auditA:`${marker}-audit-a`
+ profileA:`${marker}-profile-a`,auditA:`${marker}-audit-a`,
+ runtimeWorkspace:`${marker}-runtime-workspace`,runtimeGrant:`${marker}-runtime-grant`,runtimeAudit:`${marker}-runtime-audit`
 };
 
 async function asUser(userId,work){
@@ -116,6 +117,16 @@ async function run(){
  const outsiderWorkspaces=await asUser(ids.outsider,tx=>tx.workspace.findMany({where:{id:{in:[ids.workspaceA,ids.workspaceB]}},select:{id:true}}));
  assert.deepEqual(outsiderWorkspaces.map(row=>row.id),[ids.workspaceB]);
 
+ await asUser(ids.owner,async tx=>{
+  const management=await tx.$queryRaw`SELECT current_setting('app.user_id', true) AS "userId", meridian_private.can_manage_org(${ids.orgA}) AS "canManage", (SELECT count(*)::int FROM "Membership" WHERE "organizationId" = ${ids.orgA} AND "userId" = ${ids.owner}) AS "visibleMemberships"`;
+  assert.deepEqual(management,[{userId:ids.owner,canManage:true,visibleMemberships:1}],"owner management policy helper must resolve inside the runtime transaction");
+  const created=await tx.workspace.create({data:{id:ids.runtimeWorkspace,organizationId:ids.orgA,name:"Runtime Created Workspace",slug:ids.runtimeWorkspace}});
+  await tx.workspaceGrant.create({data:{id:ids.runtimeGrant,membershipId:ids.ownerMembership,userId:ids.owner,workspaceId:created.id}});
+  await tx.auditEvent.create({data:{id:ids.runtimeAudit,organizationId:ids.orgA,workspaceId:created.id,actorUserId:ids.owner,action:"workspace.created",aggregateType:"Workspace",aggregateId:created.id}});
+ });
+ const runtimeCreated=await asUser(ids.owner,tx=>tx.workspace.findUnique({where:{id:ids.runtimeWorkspace},select:{id:true}}));
+ assert.equal(runtimeCreated?.id,ids.runtimeWorkspace,"owners must be able to create a workspace, grant, and audit event through the runtime role");
+
  await asUser(ids.analyst,tx=>tx.competitor.create({data:{workspaceId:ids.workspaceA,name:"Allowed Analyst Competitor"}}));
  await assert.rejects(()=>asUser(ids.analyst,tx=>tx.competitor.create({data:{workspaceId:ids.workspaceB,name:"Blocked Cross-Tenant Competitor"}})));
  await assert.rejects(()=>asUser(ids.viewer,tx=>tx.topic.create({data:{workspaceId:ids.workspaceA,name:"Blocked Viewer Topic"}})));
@@ -123,7 +134,7 @@ async function run(){
  const auditUpdate=await asUser(ids.owner,tx=>tx.auditEvent.updateMany({where:{id:ids.auditA},data:{action:"blocked.update"}}));
  assert.equal(auditUpdate.count,0,"audit events must be immutable through the runtime role");
 
- console.log("RLS integration checks passed: runtime role, 9 forced-RLS tables, 20 policies, no Data API grants, tenant isolation, role enforcement, audit immutability, fixture cleanup");
+ console.log("RLS integration checks passed: runtime role, 9 forced-RLS tables, 20 policies, no Data API grants, tenant isolation, runtime workspace creation, role enforcement, audit immutability, fixture cleanup");
 }
 
 try{

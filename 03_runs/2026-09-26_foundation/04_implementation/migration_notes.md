@@ -1,5 +1,9 @@
 # Database Migration Notes
 
+Subsequent reviewed migration:
+
+- `20260927080000_workspace_owner_returning_rls` - authorize organization owners/admins directly during Prisma workspace `INSERT ... RETURNING`, while delegated users continue through explicit workspace grants.
+
 The Supabase development project was provisioned and both reviewed migrations were applied on 2026-09-26:
 
 - `20260926182700_initial` — 13 application and Auth.js tables, constraints, and indexes
