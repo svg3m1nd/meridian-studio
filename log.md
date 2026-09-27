@@ -193,3 +193,11 @@ Only `log.md` existed in `utilities/Meridian Studio`.
 - **Summary:** Deployed the Next.js shell to Vercel, added deterministic Prisma generation, separated privileged migration access from the constrained runtime role, removed Data API grants, and documented the development-database procedure.
 - **Previous state:** The app built only locally, Prisma was not generated during clean Vercel installs, and the deployment contract had one database credential that could accidentally bypass RLS.
 - **Rollback:** Revert the deployment-hardening commit, remove the Vercel project variables, and rotate/revoke any provisioned database-role credentials.
+
+### 22:59 — Provision Supabase development and prove tenant RLS
+
+- **File:** Supabase development database, Prisma migration state, runtime grants, live RLS test, implementation progress, and deployment decision records
+- **Action:** provisioned, created, modified, and verified
+- **Summary:** Created separate migration and constrained runtime database roles, applied both reviewed migrations, granted least-privilege runtime access, and added a repeatable synthetic two-tenant security regression test.
+- **Verification:** Runtime role has no RLS bypass; nine tenant tables force RLS; 20 policies are installed; Data API roles have no Meridian grants; owner, analyst, viewer, outsider, cross-tenant, missing-context, and audit-immutability cases passed; fixtures were removed.
+- **Rollback:** Remove Vercel database variables if present, revoke both custom role logins, export migration evidence, and pause the development Supabase project before considering deletion.

@@ -1,11 +1,11 @@
-# Slice 0 Migration Notes
+# Database Migration Notes
 
-No database migration was executed. Two reviewable migrations now exist:
+The Supabase development project was provisioned and both reviewed migrations were applied on 2026-09-26:
 
 - `20260926182700_initial` — 13 application and Auth.js tables, constraints, and indexes
 - `20260926182800_rls` — transaction-context helpers, 20 policies, and forced RLS on nine tenant tables
 
-The validated initial schema defines organizations, users, memberships, workspaces, workspace grants, and immutable audit events. Before the first migration:
+The validated initial schema defines organizations, users, memberships, workspaces, workspace grants, and immutable audit events. The pre-application review confirmed:
 
 1. Select the managed PostgreSQL environment.
 2. Confirm authentication-provider identity mapping.
@@ -26,8 +26,8 @@ Supabase is the accepted preferred deployment foundation. At deployment time:
 7. Create private `pgmq` queues and deploy external workers with least-privilege credentials.
 8. Keep Auth.js secrets and Supabase service-role credentials in managed server-side secret storage.
 
-This checkpoint prevents an unreviewed physical schema from being applied to an external database.
+This checkpoint prevented an unreviewed physical schema from being applied to the external database.
 
-The application now sets `app.user_id`, `app.organization_id`, and `app.workspace_id` with transaction-local `set_config` calls before tenant access. Live RLS execution tests remain pending because Docker is unavailable and no development Supabase project has been provisioned.
+The application sets `app.user_id`, `app.organization_id`, and `app.workspace_id` with transaction-local `set_config` calls before tenant access. Live execution through `meridian_runtime` confirmed the expected owner, analyst, viewer, outsider, missing-context, cross-tenant, and immutable-audit behavior. The automated test also confirmed nine forced-RLS tables, 20 policies, no Data API role grants, and complete synthetic-fixture cleanup.
 
 Deployment hardening now separates `DIRECT_URL` for the privileged migration role from `DATABASE_URL` for a `NOBYPASSRLS` runtime role. The Vercel application must never use the migration, `postgres`, or service-role credential. Provisioning steps and runtime grants are recorded in `supabase_provisioning.md` and `04_app/prisma/supabase_runtime_grants.sql`.

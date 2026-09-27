@@ -1,7 +1,7 @@
 # DEC-005 — Preferred Supabase Deployment Foundation
 
 - **Date:** 2026-09-26
-- **Status:** Accepted for deployment planning; not yet provisioned
+- **Status:** Development provisioned; staging and production not yet provisioned
 - **Decision owner:** User
 
 ## Decision

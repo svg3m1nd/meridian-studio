@@ -2,6 +2,8 @@
 
 Run after connecting a non-owner application role to the development database.
 
+Automated development-database coverage is available through `npm run test:rls`. The command requires both local database URLs and deliberately includes a confirmation flag in its package script. It creates synthetic fixtures, verifies the boundary through `meridian_runtime`, and removes the fixtures in a `finally` block.
+
 1. Seed two organizations, one workspace each, an Owner, Analyst, Viewer, and unrelated user.
 2. Set `app.user_id` inside a transaction before every tenant query.
 3. Prove Owners/Admins can access every workspace in their organization.
