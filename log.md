@@ -201,3 +201,11 @@ Only `log.md` existed in `utilities/Meridian Studio`.
 - **Summary:** Created separate migration and constrained runtime database roles, applied both reviewed migrations, granted least-privilege runtime access, and added a repeatable synthetic two-tenant security regression test.
 - **Verification:** Runtime role has no RLS bypass; nine tenant tables force RLS; 20 policies are installed; Data API roles have no Meridian grants; owner, analyst, viewer, outsider, cross-tenant, missing-context, and audit-immutability cases passed; fixtures were removed.
 - **Rollback:** Remove Vercel database variables if present, revoke both custom role logins, export migration evidence, and pause the development Supabase project before considering deletion.
+
+### 00:28 — Connect hosted runtime to Supabase development
+
+- **File:** Vercel Production environment and `/api/ready`
+- **Action:** configured and verified
+- **Summary:** Added only the constrained Supabase `DATABASE_URL` to Vercel Production, redeployed the latest `main` build, and confirmed the hosted function can reach PostgreSQL.
+- **Verification:** `https://meridian-studio-snowy.vercel.app/api/ready` returned HTTP 200 with `status: ready` and `database: reachable`.
+- **Rollback:** Remove the Vercel `DATABASE_URL`, redeploy, and rotate the `meridian_runtime` password if exposure is suspected.

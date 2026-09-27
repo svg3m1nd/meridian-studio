@@ -31,6 +31,7 @@
 - Vercel production build succeeded from the GitHub `main` branch
 - Both reviewed Prisma migrations applied successfully to Supabase development
 - Live runtime-role checks confirmed nine forced-RLS tables, 20 policies, no Data API grants, tenant isolation, role enforcement, audit immutability, and fixture cleanup
+- Vercel production readiness probe returned HTTP 200 with the constrained Supabase runtime connection
 
 ## Remaining before Slice 1 approval
 
