@@ -1,11 +1,19 @@
--- Auth.js uses direct server-side access. Do not expose its tables through Supabase Data API roles.
-DO $$ BEGIN
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'anon') THEN
-    REVOKE ALL ON TABLE "User", "Account", "Session", "VerificationToken" FROM anon;
-  END IF;
-  IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = 'authenticated') THEN
-    REVOKE ALL ON TABLE "User", "Account", "Session", "VerificationToken" FROM authenticated;
-  END IF;
+-- Meridian uses Prisma over a private server connection, not the Supabase Data API.
+-- Remove all application tables from API roles, including the RLS-bypassing service role.
+DO $$
+DECLARE target_role text;
+BEGIN
+  FOREACH target_role IN ARRAY ARRAY['anon', 'authenticated', 'service_role'] LOOP
+    IF EXISTS (SELECT 1 FROM pg_roles WHERE rolname = target_role) THEN
+      EXECUTE format(
+        'REVOKE ALL ON TABLE "User", "Account", "Session", "VerificationToken", "Organization", "Membership", "Workspace", "WorkspaceGrant", "BusinessProfile", "Competitor", "Topic", "SearchQuery", "AuditEvent" FROM %I',
+        target_role
+      );
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON TABLES FROM %I', target_role);
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE ALL ON SEQUENCES FROM %I', target_role);
+      EXECUTE format('ALTER DEFAULT PRIVILEGES IN SCHEMA public REVOKE EXECUTE ON FUNCTIONS FROM %I', target_role);
+    END IF;
+  END LOOP;
 END $$;
 
 CREATE SCHEMA IF NOT EXISTS meridian_private;
@@ -46,6 +54,12 @@ LANGUAGE sql STABLE SECURITY DEFINER SET search_path = public, pg_temp AS $$
       AND (m.role IN ('OWNER','ADMIN') OR EXISTS (SELECT 1 FROM "WorkspaceGrant" g WHERE g."membershipId" = m.id AND g."workspaceId" = w.id))
   )
 $$;
+
+REVOKE ALL ON FUNCTION meridian_private.current_user_id() FROM PUBLIC;
+REVOKE ALL ON FUNCTION meridian_private.can_access_org(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION meridian_private.can_manage_org(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION meridian_private.can_access_workspace(text) FROM PUBLIC;
+REVOKE ALL ON FUNCTION meridian_private.can_edit_workspace(text) FROM PUBLIC;
 
 ALTER TABLE "Organization" ENABLE ROW LEVEL SECURITY;
 ALTER TABLE "Membership" ENABLE ROW LEVEL SECURITY;

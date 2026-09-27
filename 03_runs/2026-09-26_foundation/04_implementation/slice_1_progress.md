@@ -13,6 +13,10 @@
 - Reviewable initial migration with 13 tables
 - Twenty RLS policies with forced RLS on nine tenant tables
 - RLS integration-test plan
+- Vercel staging deployment with automatic GitHub builds
+- Separate runtime and migration database connection contracts
+- Supabase provisioning and least-privilege runtime grant runbook
+- Database readiness endpoint and GitHub CI workflow
 
 ## Verification
 
@@ -22,6 +26,7 @@
 - Production build passed
 - npm audit reports zero vulnerabilities
 - Static migration inventory confirmed 13 tables, 20 policies, and nine forced-RLS tables
+- Vercel production build succeeded from the GitHub `main` branch
 
 ## Remaining before Slice 1 approval
 

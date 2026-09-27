@@ -29,3 +29,5 @@ Supabase is the accepted preferred deployment foundation. At deployment time:
 This checkpoint prevents an unreviewed physical schema from being applied to an external database.
 
 The application now sets `app.user_id`, `app.organization_id`, and `app.workspace_id` with transaction-local `set_config` calls before tenant access. Live RLS execution tests remain pending because Docker is unavailable and no development Supabase project has been provisioned.
+
+Deployment hardening now separates `DIRECT_URL` for the privileged migration role from `DATABASE_URL` for a `NOBYPASSRLS` runtime role. The Vercel application must never use the migration, `postgres`, or service-role credential. Provisioning steps and runtime grants are recorded in `supabase_provisioning.md` and `04_app/prisma/supabase_runtime_grants.sql`.

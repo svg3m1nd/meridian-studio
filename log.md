@@ -185,3 +185,11 @@ Only `log.md` existed in `utilities/Meridian Studio`.
 - **Action:** created and modified
 - **Summary:** Generated 13-table PostgreSQL migration, added 20 tenant policies with forced RLS on nine tables, and aligned protected application reads/writes with transaction-scoped database identity.
 - **Verification:** Prisma valid; typecheck passed; 11 tests passed; production build passed; zero npm vulnerabilities. Live SQL policy tests await PostgreSQL.
+
+### 19:08 — Deploy Vercel staging and harden Supabase boundary
+
+- **File:** GitHub/Vercel deployment, CI workflow, environment contract, Prisma datasource, RLS migration, readiness endpoint, runtime grants, and Supabase provisioning runbook
+- **Action:** created and modified
+- **Summary:** Deployed the Next.js shell to Vercel, added deterministic Prisma generation, separated privileged migration access from the constrained runtime role, removed Data API grants, and documented the development-database procedure.
+- **Previous state:** The app built only locally, Prisma was not generated during clean Vercel installs, and the deployment contract had one database credential that could accidentally bypass RLS.
+- **Rollback:** Revert the deployment-hardening commit, remove the Vercel project variables, and rotate/revoke any provisioned database-role credentials.
