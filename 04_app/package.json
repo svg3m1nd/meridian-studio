@@ -1,7 +1,7 @@
 {
   "name":"meridian-studio","version":"0.1.0","private":true,"type":"module",
   "engines":{"node":">=24.0.0"},
-  "scripts":{"dev":"next dev","build":"next build","postinstall":"prisma generate","start":"next start","typecheck":"tsc --noEmit","test":"vitest run","test:rls":"node scripts/test-rls.mjs --confirm-development-database","db:generate":"prisma generate","db:validate":"prisma validate","db:status":"prisma migrate status","db:deploy":"prisma migrate deploy"},
+  "scripts":{"dev":"next dev","build":"next build","postinstall":"prisma generate","start":"next start","typecheck":"tsc --noEmit","test":"vitest run","test:rls":"node scripts/test-rls.mjs --confirm-development-database","bootstrap:owner":"node scripts/bootstrap-owner.mjs --confirm-development-database","db:generate":"prisma generate","db:validate":"prisma validate","db:status":"prisma migrate status","db:deploy":"prisma migrate deploy"},
   "dependencies":{"@auth/prisma-adapter":"2.11.3","@prisma/client":"6.12.0","next":"16.3.6","next-auth":"5.0.0-beta.32","react":"19.3.0","react-dom":"19.3.0","zod":"4.6.5"},
   "devDependencies":{"@types/node":"^24.0.0","@types/react":"^19.0.0","@types/react-dom":"^19.0.0","prisma":"6.12.0","typescript":"7.0.2","vitest":"5.0.2"}
 }

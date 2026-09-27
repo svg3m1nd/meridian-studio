@@ -19,12 +19,14 @@
 - Database readiness endpoint and GitHub CI workflow
 - Provisioned Supabase development PostgreSQL with separate migration/runtime roles
 - Repeatable live two-tenant RLS regression test with automatic fixture cleanup
+- Production GitHub-login allowlist that fails closed when unconfigured
+- Idempotent first-owner bootstrap command for the Fusion Vine organization
 
 ## Verification
 
 - Prisma generation and schema validation passed
 - TypeScript passed
-- 13 unit tests passed
+- 17 unit tests passed
 - Production build passed
 - npm audit reports zero vulnerabilities
 - Static migration inventory confirmed 13 tables, 20 policies, and nine forced-RLS tables
@@ -35,6 +37,6 @@
 
 ## Remaining before Slice 1 approval
 
-- Register OAuth credentials
+- Register GitHub OAuth credentials and complete the first-owner bootstrap
 - Add database integration tests for full creation and baseline-replacement flows
 - Add organization switching when a user belongs to multiple organizations
