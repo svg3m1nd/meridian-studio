@@ -19,7 +19,8 @@
 - Database readiness endpoint and GitHub CI workflow
 - Provisioned Supabase development PostgreSQL with separate migration/runtime roles
 - Repeatable live two-tenant RLS regression test with automatic fixture cleanup
-- Live runtime-role regression coverage for workspace creation, owner grant, and audit insertion
+- Live runtime-role regression coverage for workspace creation, baseline save, owner grant, and audit insertion
+- Baseline save confirmation and clearer target-search/AI-prompt guidance
 - Production GitHub-login allowlist that fails closed when unconfigured
 - Idempotent first-owner bootstrap command for the Fusion Vine organization
 
